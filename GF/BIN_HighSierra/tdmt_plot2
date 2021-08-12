@@ -1,0 +1,657 @@
+#!/usr/bin/perl
+# Pete Lombard, UC Berkeley Seismology Lab; July 2008
+
+use strict;
+use File::Basename;
+use Getopt::Std;
+
+# Global option flags:
+our ($opt_B, $opt_D, $opt_W, $opt_d, $opt_g, $opt_h, $opt_t);
+
+# Global variable declarations:
+use vars qw($bbBaseDiam $convert $mtmanip $GMT $VERSION);
+use vars qw(%Event @Data);
+
+# Configurable parameters
+ $GMT = "/opt/gmt/bin/gmt";
+# $GMT = "/gmt/bin";
+$convert = "/sw/bin/convert";
+$mtmanip = "mtmanip";
+
+$bbBaseDiam = 1.5;
+
+# End of configurable items
+$VERSION = "0.0.3";
+
+##############################################################################
+#       print_syntax    - print syntax and exit.
+##############################################################################
+sub print_syntax {
+    my ($cmdname) = @_;
+    print << "EOF";
+    $cmdname version $VERSION
+        $cmdname - create waveform + mechanism plots for tdmt.
+	Creates output files in the current directory.
+Syntax:
+        $cmdname  [-B [-D diam]] [-W] [-d] [-g] [-t title-text] data-file
+	$cmdname -h
+where:
+	-B		- make only a single beachball plot with all stations
+	-D diam		- specify diameter of beachball, only with -B option
+		default diameter is $bbBaseDiam inches.
+	-W		- make only waveform plot(s), without MT info or plot
+	-d	Debug   - turn on diagnostic output.
+	-g		- Create jpg file in addition to postscript
+	-t title-text	- optional text to be written as title of plot
+        -h      Help    - prints this help message.
+
+Notes: -B and -W can be used together to make one plot containing only the 
+   beachball diagram with all the stations labeled at their azimuth postions,
+   plus one or more waveform plots without the MT information.
+   
+   Without the -B and -W flags, complete plots are made with beachball diagram,
+   waveform plots, and moment tensor information.
+
+EOF
+exit(0);
+}
+
+
+exit main();
+
+# The main function
+sub main {
+
+    my ($me) = basename($0);
+
+# Process command-line arguments
+    getopts ('BD:Wdght:');
+
+    print_syntax($me) if ($opt_h);
+    print_syntax($me) unless (@ARGV);
+    print_syntax($me) if ($opt_D && !$opt_B);
+    $bbBaseDiam = $opt_D if ($opt_D);
+
+    foreach my $datafile (@ARGV) {
+	my $res = parseDataFile($datafile);
+	if ($res == 0) {
+	    if ($opt_B) {
+		my $psFile = "mechanism.ps";
+		plotMT($psFile, 0, scalar(@Data));
+	    }
+	    if ((!$opt_B) || $opt_W) {
+		makePlot();
+	    }
+	}
+    }
+    return 0;
+}
+
+sub parseDataFile {
+    my $datafile = shift;
+
+    unless (open FH, "< $datafile" ) {
+	warn "Can't open $datafile: $!\n";
+	return 1;
+    }
+
+    # State values:
+    # h1: event header line 1: depth variance  VR       nsta
+    # h2: event header line 2: mxx mxy mxz myy myz mzz
+    # h3: event header line 3: st1 rk1 dp1 st2 rk2 dp2
+    # h4: event header line 4: pdc pclvd piso
+    # s1: station header line 1: filename
+    # s2: station header line 2: dt npts dist Az Zcor VR
+    # sd: station data line: data T R Z; synth T R Z
+    my $state = "h1";
+    my ($staCount, $npts) = (0, 0);
+
+    # Wrap all this in an eval block so we can handle exceptions
+    eval {
+	while (<FH>) {
+	    next if (/^\s*\#/ or /^\s*$/);
+	    chomp;
+	    if ($state eq "h1") {
+		if (/^\s*(\d+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)\s+(\d+)/) {
+		    $Event{DEPTH} = $1;
+		    $Event{VARIANCE} = $2;
+		    $Event{VR} = $3;
+		    $Event{NSTA} = $4;
+		    $state = "h2";
+		}
+		else {
+		    die "tdmt_plot: $datafile has bad format at 1st header line: $_\n";
+		}
+	    }
+	    elsif ($state eq "h2") {
+		if (/^\s*([-+e.0-9]+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)$/) {
+		    $Event{MXX} = $1;
+		    $Event{MXY} = $2;
+		    $Event{MXZ} = $3;
+		    $Event{MYY} = $4;
+		    $Event{MYZ} = $5;
+		    $Event{MZZ} = $6;
+		    $state = "h3";
+		}
+		else {
+		    die "tdmt_plot: $datafile has bad format at 2nd header line: $_\n";
+		}
+	    }
+	    elsif ($state eq "h3") {
+		if (/^\s*([-\d]+)\s+([-\d]+)\s+([-\d]+)\s+([-\d]+)\s+([-\d]+)\s+([-\d]+)$/) {
+		    $Event{STRIKE1} = $1;
+		    $Event{RAKE1} = $2;
+		    $Event{DIP1} = $3;
+		    $Event{STRIKE2} = $4;
+		    $Event{RAKE2} = $5;
+		    $Event{DIP2} = $6;
+		    $state = "h4";
+		}
+		else {
+		    die "tdmt_plot: $datafile has bad format at 3rd header line: $_\n";
+		}
+	    }
+	    elsif ($state eq "h4") {
+		if (/^\s*(\d+)\s+(\d+)\s+(\d+)$/) {
+		    $Event{PDC} = $1;
+		    $Event{PCLVD} = $2;
+		    $Event{PISO} = $3;
+		    $state = "s1";
+		}
+		else {
+		    die "tdmt_plot: $datafile has bad format at 4th header line: $_\n";
+		}
+	    }
+	    elsif ($state eq "s1") {
+		if (/^(\S+)$/) {
+		    $Data[$staCount] = {};
+		    $Data[$staCount]->{STAFILE} = $1;
+		    $state = "s2";
+		}
+		else {
+		    die "tdmt_plot: $datafile has bad format at 1st station header line: $_\n";
+		}
+	    }
+	    elsif ($state eq "s2") {
+		if (/^\s*([.0-9]+)\s+(\d+)\s+([.0-9]+)\s+([.0-9]+)\s+(\d+)\s+([-+e.0-9]+)$/) {
+		    $Data[$staCount]->{DT} = $1;
+		    $Data[$staCount]->{NPTS} = $2;
+		    $Data[$staCount]->{DIST} = $3;
+		    $Data[$staCount]->{AZ} = $4;
+		    $Data[$staCount]->{ZCOR} = $5;
+		    $Data[$staCount]->{VR} = $6;
+		    $Data[$staCount]->{DataT} = [];
+		    $Data[$staCount]->{DataT} = [];
+		    $Data[$staCount]->{DataT} = [];
+		    $Data[$staCount]->{SynthT} = [];
+		    $Data[$staCount]->{SynthR} = [];
+		    $Data[$staCount]->{SynthZ} = [];
+		    $state = "sd";
+		    $npts = 0;
+		}
+		else {
+		    die "tdmt_plot: $datafile has bad format at 2nd station header line: $_\n";
+		}
+	    }
+	    elsif ($state eq "sd") {
+		if (/^\s*([-+e.0-9]+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)\s+([-+e.0-9]+)$/) {
+		    push @{ $Data[$staCount]->{DATAT} }, $1;
+		    push @{ $Data[$staCount]->{DATAR} }, $2;
+		    push @{ $Data[$staCount]->{DATAZ} }, $3;
+		    push @{ $Data[$staCount]->{SYNTHT}}, $4;
+		    push @{ $Data[$staCount]->{SYNTHR}}, $5;
+		    push @{ $Data[$staCount]->{SYNTHZ}}, $6;
+		    $npts++;
+		    if ($npts == $Data[$staCount]->{NPTS}) {
+			print "$npts points read for stationfile $Data[$staCount]->{STAFILE}\n" if ($opt_d);
+			$staCount++;
+			$state = "s1";
+		    }
+		}
+		else {
+		    die "tdmt_plot: $datafile has bad format at station " . $staCount + 1 
+			. " data line $npts: $_\n";
+		}
+	    }
+	}
+	close (FH);
+    };
+    if ($@) {
+	printf STDERR "parseFile error: $@\n";
+	printf STDERR "skipping $datafile\n";
+	close (FH);
+	return 1;
+    }
+    getMoment();
+    
+    return 0;
+}
+
+
+sub makePlot {
+
+# Parameters to control plotting
+    my $maxStaPerPlot = 6;
+
+    # Assumes Landscape layout on 8.5 X 11 inch page
+    # inches from left edge to start of Tangential plot:
+    my $xPlotStart = 1.0;  
+    # inches between start of Tangential and start of Radial plots
+    my $xPitch = 2.2;
+    # length of x axis in inches (should be less than xPitch)
+    my $xPlotLen = 2.0;
+
+    # inches from bottom edge to origin of first (top) plot
+    my $yPlotStart = 6.9;
+    # inches between axes of adjacent station plots
+    my $yPitch;  # depends on number of station plots on the page
+    # Length of plot vertical axis in inches (should be less than yPitch)
+    my $yPlotLen = 1.0;
+    # Amount by which synthetic plot may exceed yPlotLen before clipping
+    my $overScale = 1.4;
+
+    setYScales();
+
+    my $numSta = scalar(@Data);
+    # Fiddle with the arithmetic to ensure desired float-to-int conversion:
+    my $roundval = ($maxStaPerPlot > 1) ? 
+	($maxStaPerPlot -1) / $maxStaPerPlot : 0.5;
+    my $numPages = int($roundval + $numSta / $maxStaPerPlot);
+    my ($npage,$nsta) = (0,0); # indices for pages and stations
+    
+    # Pen and Font attributes
+    my $dataPen = "-W2.5,black";
+    my $synthPen = "-W2.5,red";
+    my $scalePen = "-W1.0,black";
+    my $plotHeadFontsz = 20;
+    my $staFontsz = 13.5;
+    my $scaleFontsz = 15;
+
+    my $maxPts = 0;
+    for (my $nstp = 0; $nstp < $numSta; $nstp++) {
+	$maxPts = $Data[$nstp]->{NPTS} if ($Data[$nstp]->{NPTS} > $maxPts);
+    }
+    die "no data points read for any station\n" if ($maxPts == 0);
+    # xScale: inches per sample
+    my $xScale = $xPlotLen / $maxPts;
+    # distance in samples between start of Tangential and Radial plots
+    my $xOffset = $xPitch / $xScale;
+
+    while ($npage < $numPages) {
+	my $numStaThisPage = ($numSta - $nsta < $maxStaPerPlot) ? 
+	    $numSta - $nsta : $maxStaPerPlot;
+	$yPitch = 7.0 / $numStaThisPage;
+
+	my $sta = $Data[$nsta];
+
+	# Set GMT -J and -R flags, except station-dependent values
+	# We're going to plot the tangential, radial and vertical components
+	# together in a single call to psxy, for speed
+	
+	my $jX = 2 * $xPitch + $xPlotLen;
+	my $jY = $overScale * $yPlotLen;
+	my $J = sprintf("-JX%fi/%fi", $jX, $jY);
+	my $rX = $jX / $xScale;
+	my $X = "-Xa${xPlotStart}i";
+	
+	my $psFile = sprintf("plot_d%02d_%d.ps", $Event{DEPTH}, $npage + 1);
+	if ( -e $psFile ) {
+	    unlink $psFile or die "tdmt_plot: can't remove old $psFile: $!\n";
+	}
+
+	my $firstSta = $nsta;
+	for (my $nstp = 0; $nstp < $numStaThisPage; $nstp++, $nsta++) {
+	    my $O = ($nstp == 0) ? "" : "-O";
+	    $sta = $Data[$nsta];
+
+	    my $rY = $overScale * $sta->{SCALEFAC};
+	    my $R = "-R0/$rX/-$rY/$rY";
+
+	    # vertical location of origin for this station
+	    my $yPos = $yPlotStart - $nstp * $yPitch; 
+	    my $Y = sprintf("-Ya%fi", $yPos - 0.5 * $jY);
+
+	    my $cmd = "$GMT psxy $J $R $X $Y -K $O >> $psFile";
+	    open CMD, "| $cmd" or die "tdmt_plot.makePlot: can't open $cmd: $!\n";
+	    
+	    # Tangential data
+	    print CMD "> $dataPen\n";
+	    for (my $i = 0; $i < $sta->{NPTS}; $i++) {
+		print CMD "$i $Data[$nsta]->{DATAT}->[$i]\n";
+	    }
+	    # Radial data
+	    print CMD "> $dataPen\n";
+	    for (my $i = 0; $i < $sta->{NPTS}; $i++) {
+		print CMD $i + $xOffset, " $Data[$nsta]->{DATAR}->[$i]\n";
+	    }
+	    # Vertical data
+	    print CMD "> $dataPen\n";
+	    for (my $i = 0; $i < $sta->{NPTS}; $i++) {
+		print CMD $i + 2 * $xOffset, " $Data[$nsta]->{DATAZ}->[$i]\n";
+	    }
+	    # Tangential synthetic
+	    print CMD "> $synthPen\n";
+	    for (my $i = 0; $i < $sta->{NPTS}; $i++) {
+		print CMD "$i $Data[$nsta]->{SYNTHT}->[$i]\n";
+	    }
+	    # Radial synthetic
+	    print CMD "> $synthPen\n";
+	    for (my $i = 0; $i < $sta->{NPTS}; $i++) {
+		print CMD $i + $xOffset, " $Data[$nsta]->{SYNTHR}->[$i]\n";
+	    }
+	    # Vertical synthetic
+	    print CMD "> $synthPen\n";
+	    for (my $i = 0; $i < $sta->{NPTS}; $i++) {
+		print CMD $i + 2 * $xOffset, " $Data[$nsta]->{SYNTHZ}->[$i]\n";
+	    }
+
+	    # Time scale
+	    my $x_tsEnd = $jX / $xScale;
+	    my $x_tsStart = $x_tsEnd - (0.25 * $xPlotLen / $xScale);
+	    my $y_tsCenter = -0.6 * $sta->{SCALEFAC};
+	    my $tsHeight = 0.2 * $sta->{SCALEFAC};
+	    
+	    print CMD "> $scalePen\n";
+	    print CMD "$x_tsStart ", $y_tsCenter - $tsHeight * 0.5, "\n";
+	    print CMD "$x_tsStart ", $y_tsCenter + $tsHeight * 0.5, "\n";
+	    print CMD "> $scalePen\n";
+	    print CMD "$x_tsEnd ", $y_tsCenter - $tsHeight * 0.5, "\n";
+	    print CMD "$x_tsEnd ", $y_tsCenter + $tsHeight * 0.5, "\n";
+	    print CMD "> $scalePen\n";
+	    print CMD "$x_tsStart $y_tsCenter\n";
+	    print CMD "$x_tsEnd $y_tsCenter\n";
+	    close CMD;
+	}
+	
+	# Text for each station's plots
+	# Changes scale to inches instead of plot scale
+	$nsta = $firstSta;
+	$J = sprintf("-JX%fi/%fi", $jX, $yPlotStart);
+	my $R = sprintf("-R0/%f/0/%f", $jX, $yPlotStart);
+	my $cmd = "$GMT pstext $J $R -Xa${xPlotStart}i -Ya0i -N -K -O -F+f18p,Helvetica,-=0.5p,red >> $psFile";
+	open CMD, "| $cmd" or die "tdmt_plot.makePlot: can't open $cmd: $!\n";
+	printf CMD "%f %f %d 0 0 BC Tangential\n", $xPlotLen * 0.5, 
+	$yPlotStart + 0.6, $plotHeadFontsz;
+	printf CMD "%f %f %d 0 0 BC Radial\n", $xPlotLen * 0.5 + $xPitch,
+	$yPlotStart + 0.6, $plotHeadFontsz;
+	printf CMD "%f %f %d 0 0 BC Vertical\n", $xPlotLen * 0.5 + 2 * $xPitch, 
+	$yPlotStart + 0.6, $plotHeadFontsz;
+	
+	for (my $nstp = 0; $nstp < $numStaThisPage; $nstp++, $nsta++) {
+	    $sta = $Data[$nsta];
+	    my $yPos = $yPlotStart - $nstp * $yPitch;
+	    my $staname = staNetString($sta->{STAFILE});
+	    printf CMD "%f %f %d 0 0 MR %s\n", -0.2, $yPos, $staFontsz, 
+	    $staname;
+	    printf CMD "%f %f %d 0 0 TL Distance = %.0f km  Azimuth = %.0f\n", 0, $yPos - 0.4,
+		$staFontsz, $sta->{DIST}, $sta->{AZ}, $sta->{SCALEFAC},
+		$sta->{ZCOR}, $sta->{VR};
+	    printf CMD "%f %f %d 0 0 TL %.2f sec\n", $jX - 0.25 * $xPlotLen,
+	    $yPos - 0.35, $scaleFontsz, $sta->{DT} * $sta->{NPTS} * 0.25;
+	    
+	}
+	close CMD;
+	$npage++;
+
+	if ($opt_W) {
+	    # Use empty psxy command to close the ps file
+	    $cmd = "$GMT pstext $J $R -O -F+f18p,Helvetica,-=0.5p,red >> $psFile";
+	    open CMD, "| $cmd" or die "tdmt_plot.plotMT: can't open $cmd: $!\n";
+	    close CMD;
+	}
+	else {
+	    plotMT($psFile, $firstSta, $numStaThisPage);
+	    plotHeader($npage, $numPages, $psFile, $opt_t);
+	}
+	pstojpg($psFile) if ($opt_g);
+
+    } # loop over pages
+    
+    return;
+}
+
+sub plotMT {
+    my $psFile = shift;
+    my $firstSta = shift;
+    my $numStaThisPage = shift;
+
+    my $yPitch = 0.25;
+    my $yTextStart = 6.9;
+    my $xTextPos = 8.5;
+    my $xTextLen = 3.0;
+    my $solnFontsz = 13;
+    my $staFontsz = 10;
+    my $staExtra = 0.05;
+    my $bbX = 8.1;
+    my $bbY = 1.5;
+    my $bbDiam = $bbBaseDiam * 5.0 / $Event{MW};
+    # Shade the compression region dark gray instead of black,
+    # so that DC planes are visible.
+    my $bbCompShade = 100;
+    
+    my $J = "-JX2i";
+    my $R = "-R-1/1/-1/1";
+    my $S = "-Sm" . $bbDiam . "i";
+    my $O = "-O";
+    if ($opt_B) {
+	$bbX = 6.5; # center plot to make room for larger diameter
+	$O = "";    # Not appending to PS file
+	unlink $psFile if ( -f $psFile);
+    }
+    my $cmd = "$GMT psmeca $J $R $S -Xa0 -Ya0 -G$bbCompShade -K -N $O -T0 >> $psFile";
+    open CMD, "| $cmd" or die "tdmt_plot.plotMT: can't open $cmd: $!\n";
+    printf CMD "%f %f 0 %f %f %f %f %f %f 22 0 0\n", $bbX, $bbY, 
+    $Event{MZZ} * 1.0e-22, $Event{MXX} * 1.0e-22, $Event{MYY} * 1.0e-22, 
+    $Event{MXZ} * 1.0e-22, -$Event{MYZ} * 1.0e-22, -$Event{MXY} * 1.0e-22;
+    close CMD;
+
+    # Plot stations around the beach
+    my $nsta = $firstSta;
+    $cmd = "$GMT pstext $J $R -Xa0 -Ya0 -N -K -O >> $psFile";
+    open CMD, "| $cmd" or die "tdmt_plot.plotMT: can't open $cmd: $!\n";
+
+    for (my $nstp = 0; $nstp < $numStaThisPage; $nstp++, $nsta++) {
+	my $sta = $Data[$nsta];
+	my $staname = staNetString($sta->{STAFILE});
+	my $just = azJust($sta->{AZ});
+	my $arg = $sta->{AZ} * 3.14159 / 180.0;
+	my $staX = $bbX + ($bbBaseDiam * 0.5 + $staExtra) * sin($arg);
+	my $staY = $bbY + ($bbBaseDiam * 0.5 + $staExtra) * cos($arg);
+	printf CMD "%f %f %d 0 0 %s %s\n", $staX, $staY,
+	$staFontsz, $just, $staname;
+    }
+    close CMD;
+
+    if ($opt_B) {
+	# Use empty psxy command to close the ps file
+	$cmd = "$GMT pstext $J $R -O >> $psFile";
+	open CMD, "| $cmd" or die "tdmt_plot.plotMT: can't open $cmd: $!\n";
+	close CMD;
+	pstojpg($psFile) if ($opt_g);
+	return;
+    }
+
+    # Solution Text
+    $J = sprintf("-JX%fi/%fi", $xTextLen, $yTextStart);
+    $R = sprintf("-R0/%f/0/%f", $xTextLen, $yTextStart);
+    my $line = 0;
+    $cmd = "$GMT pstext $J $R -Xa${xTextPos}i -Ya0i -N -K -O >> $psFile";
+    open CMD, "| $cmd" or die "tdmt_plot.plotMT: can't open $cmd: $!\n";
+    printf CMD "0 %f %d 0 0 BL Centriod Depth = %d km\n", $yTextStart - $line++ * $yPitch, 
+    $solnFontsz, $Event{DEPTH};
+    printf CMD "0 %f %d 0 0 BL Strike = %d ; %d\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{STRIKE1}, 
+    $Event{STRIKE2};
+    printf CMD "0 %f %d 0 0 BL Rake = %d ; %d\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{RAKE1}, 
+    $Event{RAKE2};
+    printf CMD "0 %f %d 0 0 BL Dip = %d ; %d\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{DIP1}, 
+    $Event{DIP2};
+    printf CMD "0 %f %d 0 0 BL Mo = %.2e [dyn/cm]\n",
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{MO};
+    printf CMD "0 %f %d 0 0 BL Mw = %.2f\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{MW};
+    printf CMD "0 %f %d 0 0 BL Percent DC = %d\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{PDC};
+    printf CMD "0 %f %d 0 0 BL Percent CLVD = %d\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{PCLVD};
+    printf CMD "0 %f %d 0 0 BL Percent ISO = %d\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{PISO};
+    printf CMD "0 %f %d 0 0 BL Variance = %.2e\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{VARIANCE};
+    printf CMD "0 %f %d 0 0 BL Var. Red. = %.1f\n", 
+    $yTextStart - $line++ * $yPitch, $solnFontsz, $Event{VR};
+
+
+    if ($Event{PISO} < 1.0) {
+	printf CMD "0 %f %d 0 0 BL RES/Pdc = %.2e\n",
+	$yTextStart - $line++ * $yPitch, $solnFontsz, 
+	$Event{VARIANCE}/$Event{PDC};
+    }
+    close CMD;
+    
+    return;
+}
+
+sub plotHeader {
+    my $npage = shift;
+    my $maxPages = shift;
+    my $psFile = shift;
+    my $title = shift;
+
+    my $pageFontsz = 10;
+    my $xPage = 10.5;
+    my $yPage = 8.0;
+    my $titleFontSize = 12;
+    my $xTitle = 5.5;
+    my $yTitle = 8.2;
+
+    # This is the last segment of the GMT file, so no -K flag:
+    my $cmd = "$GMT pstext -Jx11i/8.5i -R0/11/0/8.5 -Xa0 -Ya0 -N -O >> $psFile";
+    open CMD, "| $cmd" or die "tdmt_plot.plotHeader: can't open $cmd: $!\n";
+
+    if (defined $title) {
+	# plot the title
+	printf CMD "%f %f %d 0 0 MC %s\n", $xTitle,$yTitle,$pageFontsz,$title
+	}
+
+    printf CMD "%f %f %d 0 0 MR page %d of %d\n", $xPage, $yPage, $pageFontsz,
+    $npage, $maxPages;
+    close CMD;
+    return;
+
+}
+
+# setYScales: set a scale factor for each station to the max absolute value
+# of the three data (not synthetic) traces.
+sub setYScales {
+    
+    for (my $nsta = 0; $nsta < scalar(@Data); $nsta++) {
+	my $sta = $Data[$nsta];
+	my ($scalet, $scaler, $scalez, $scalefac);
+	for (my $i = 0; $i < $sta->{NPTS}; $i++) {
+	    $scalet = abs($Data[$nsta]->{DATAT}->[$i]) if 
+		($scalet < abs($Data[$nsta]->{DATAT}->[$i]));
+	    $scaler = abs($Data[$nsta]->{DATAR}->[$i]) if 
+		($scaler < abs($Data[$nsta]->{DATAR}->[$i]));
+	    $scalez = abs($Data[$nsta]->{DATAZ}->[$i]) if 
+		($scalez < abs($Data[$nsta]->{DATAZ}->[$i]));
+	}
+	$scalefac = ($scalet > $scaler) ? $scalet : $scaler;
+	$scalefac = ($scalefac > $scalez) ? $scalefac : $scalez;
+	$Data[$nsta]->{SCALEFAC} = $scalefac;
+	print "scale T R Z for $Data[$nsta]->{STAFILE}: $scalet $scaler $scalez\n" 
+	    if ($opt_d);
+	
+    }
+    return;
+}
+
+
+# staNetStr: try to devine the station and network name from
+# the datafile name. station and network names may be swapped from
+# our expected convention but we aren't concerned.
+# If the input string doesn't meet expectations, we return it unchanged.
+sub staNetString {
+    my $inStr = shift;
+    my $outStr;
+
+    if ($inStr =~ /\W*([A-Z0-9]+)\.([A-Z0-9]+)/) {
+	my $sta = $1;
+	my $net = $2;
+	$outStr = "$sta $net";
+    }
+    else {
+	$outStr = $inStr;
+    }
+    return $outStr;
+}
+
+# Return an appropriate GMT pstext justification string for a given azimuth.
+# The idea is to choose a justification so that the text will be outside
+# of the circle around which the text is being written.
+sub azJust {
+    my $az = shift;
+    my $just;
+
+    if ($az < 15) {
+	$just = 'CB';
+    }
+    elsif ($az < 75) {
+	$just = 'LB';
+    }
+    elsif ($az < 105) {
+	$just = 'LM';
+    }
+    elsif ($az < 165) {
+	$just = 'LT';
+    }
+    elsif ($az < 195) {
+	$just = 'CT';
+    }
+    elsif ($az < 255) {
+	$just = 'RT';
+    }
+    elsif ($az < 285) {
+	$just = 'RM';
+    }
+    elsif ($az < 345) {
+	$just = 'RB';
+    }
+    else {
+	$just = 'CB';
+    }
+    return $just;
+}
+
+sub getMoment {
+    my $scale = 1.0e+22;
+    my $cmd = sprintf("$mtmanip -k %.2e %.2e %.2e %.2e %.2e %.2e %.2e -W -K",
+		      $scale, $Event{MXX} / $scale, $Event{MXY} / $scale,
+		      $Event{MXZ} / $scale, $Event{MYY} / $scale, $Event{MYZ} / $scale,
+		      $Event{MZZ} / $scale);
+    open CMD, "$cmd |" or die "tdmt_plot.getMoment: can't run $cmd: $!\n";
+    my $line = <CMD>;  # We only need the first line of output
+    close CMD;
+
+    if ($line =~ /\s+Mw =\s+([.0-9]+)\s+Mo =\s+([-+Ee.0-9]+)/) {
+	$Event{MW} = $1;
+	$Event{MO} = $2;
+    }
+    else {
+	print STDERR "tdmt_plot.getMoment: failed to parse mtmanip output: $line";
+    }
+
+    return;
+}
+
+sub pstojpg {
+    my $psFile = shift;
+
+    my $jpg;
+    ($jpg = $psFile) =~ s/ps$/jpg/;
+    my $trim = ($opt_B or $opt_W) ? "-trim" : "";
+    my $cmd = "$convert -rotate 90 $trim $psFile $jpg";
+    system($cmd);
+}
