@@ -1,0 +1,50 @@
+#! /bin/csh
+# Window out the eight vectors for many distances
+# Remember to set NT and DT CORRECTLY!
+# USE wvint9 (The flipped traces are corrected within this
+# code rather than by the external program flip
+#
+set path=($path ../UTILITIES/BIN)
+#
+set dt=0.10
+set npts=2048
+set count=0
+set j=1
+set vshift=0
+set i=0
+set dist=(100 680)
+set loopend=1
+set nvec=0
+rehash
+#
+#
+@ nvec=($loopend - $count) * 10
+while ($count < $loopend)
+@ vshift=$i + 7
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp1$$
+@ vshift=$i + 4
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp2$$
+@ vshift=$i + 6
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp3$$
+@ vshift=$i + 3
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp4$$
+@ vshift=$i + 1
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp5$$
+@ vshift=$i + 5
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp6$$
+@ vshift=$i + 2
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp7$$
+@ vshift=$i
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp8$$
+@ vshift=$i + 8
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp9$$
+@ vshift=$i + 9
+window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp10$$
+cat tmp1$$ tmp2$$ tmp3$$ tmp4$$ tmp5$$ tmp6$$ tmp7$$ tmp8$$ tmp9$$ tmp10$$ > junk
+echo $j
+mkHelm format="(6e13.5)" ntr=10 dt=$dt nt=$npts < junk > gil7_{$dist[$j]}d8.disp
+\rm tmp*$$
+@ i += 10
+@ count++
+@ j++
+end
