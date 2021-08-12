@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp xmlns="http://geofon.gfz-potsdam.de/ns/seiscomp3-schema/0.9" version="0.9">
+  <EventParameters publicID="smi:local/8321fb3f-424d-4f8f-bd27-957dab68d6c1">
+    <origin publicID="smi:local/tdmtw/2018-10-11T16.55.07/origin#catalog">
+      <time>
+        <value>2018-10-11T16:55:07.000000Z</value>
+      </time>
+      <latitude>
+        <value>30.9572</value>
+      </latitude>
+      <longitude>
+        <value>35.4711</value>
+      </longitude>
+      <depth>
+        <value>19</value>
+      </depth>
+      <type>hypocenter</type>
+      <evaluationStatus>preliminary</evaluationStatus>
+      <magnitude publicID="smi:local/tdmtw/2018-10-11T16.55.07/magnitude#mw">
+        <magnitude>
+          <value>2.94</value>
+        </magnitude>
+        <type>mw</type>
+        <originID>smi:local/tdmtw/2018-10-11T16.55.07/origin#catalog</originID>
+      </magnitude>
+    </origin>
+    <focalMechanism publicID="smi:local/tdmtw/2018-10-11T16.55.07/focal_mechanism">
+      <triggeringOriginID>smi:local/tdmtw/2018-10-11T16.55.07/origin#catalog</triggeringOriginID>
+      <nodalPlanes>
+        <nodalPlane1>
+          <strike>
+            <value>31.0</value>
+          </strike>
+          <dip>
+            <value>70.0</value>
+          </dip>
+          <rake>
+            <value>-165.0</value>
+          </rake>
+        </nodalPlane1>
+        <nodalPlane2>
+          <strike>
+            <value>295.7638106138721</value>
+          </strike>
+          <dip>
+            <value>75.9239045783375</value>
+          </dip>
+          <rake>
+            <value>-20.646896487046483</value>
+          </rake>
+        </nodalPlane2>
+      </nodalPlanes>
+      <momentTensor publicID="smi:local/tdmtw/2018-10-11T16.55.07/moment_tensor">
+        <scalarMoment>
+          <value>31523022354352.32</value>
+        </scalarMoment>
+        <tensor>
+          <Mrr>
+            <value>-3.1449773454046646e+19</value>
+          </Mrr>
+          <Mtt>
+            <value>-2.235024949528313e+20</value>
+          </Mtt>
+          <Mpp>
+            <value>2.5495226840687795e+20</value>
+          </Mpp>
+          <Mrt>
+            <value>5.8526644285075915e+19</value>
+          </Mrt>
+          <Mrp>
+            <value>-1.2356358574858674e+20</value>
+          </Mrp>
+          <Mtp>
+            <value>1.5266759567456266e+20</value>
+          </Mtp>
+        </tensor>
+        <varianceReduction>50.5656671708491</varianceReduction>
+        <doubleCouple>0.83</doubleCouple>
+        <clvd>0.17</clvd>
+        <iso>0.0</iso>
+        <greensFunctionID>smi:local/GREEN_GitHDUF05__0.1_0.0-0.0_fullNNN_5.0_495.0/MSEED/</greensFunctionID>
+        <methodID>smi:local/TDMTW</methodID>
+      </momentTensor>
+    </focalMechanism>
+    <event publicID="smi:local/tdmtw/2018-10-11T16.55.07/event">
+      <preferredOriginID>smi:local/tdmtw/2018-10-11T16.55.07/origin#catalog</preferredOriginID>
+      <preferredMagnitudeID>smi:local/tdmtw/2018-10-11T16.55.07/magnitude#mw</preferredMagnitudeID>
+      <preferredFocalMechanismID>smi:local/tdmtw/2018-10-11T16.55.07/focal_mechanism</preferredFocalMechanismID>
+      <type>earthquake</type>
+      <description>
+        <text>2018-10-11T16.55.07</text>
+        <type>earthquake name</type>
+      </description>
+      <originReference>smi:local/tdmtw/2018-10-11T16.55.07/origin#catalog</originReference>
+      <focalMechanismReference>smi:local/tdmtw/2018-10-11T16.55.07/focal_mechanism</focalMechanismReference>
+    </event>
+  </EventParameters>
+</seiscomp>
