@@ -51,7 +51,7 @@ from obspy.imaging.beachball import beach, MomentTensor, mt2axes, mt2plane, aux_
 from mpl_toolkits.basemap import Basemap
 from obspy.signal.cross_correlation import xcorr
 from obspy.geodetics import FlinnEngdahl
-
+from fdsn_functions import *
 
 _fe = FlinnEngdahl()
 FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
@@ -77,7 +77,7 @@ parser.add_argument('-d', '--Depth0', type=float, metavar='', help="Location, de
 parser.add_argument('-m', '--Mw0', type=float, metavar='', help="Magnitude")
 parser.add_argument('-rmax', '--Radious', type=float, default=0, metavar='', help="Maximum distance from epicenter to station")
 parser.add_argument('-rmin', '--Radious0', type=float, default=0, metavar='', help="Minimum distance from epicenter to station")
-parser.add_argument('-c', '--Client', type=str, metavar='', help="Choose FDSN server like: ISN, IRIS, ORFEUS, GFZ, KOERI, https://www.fdsn.org/webservices/datacenters/")
+parser.add_argument('-c', '--Client', type=str, default='GFZ', metavar='', help="Choose FDSN server like: IRIS, ORFEUS, GFZ, KOERI, https://www.fdsn.org/webservices/datacenters/")
 parser.add_argument('-chnp', '--ChannelPriority', type=str, default='HBSE', metavar='', help="set the channel priority H, B, S, E (B=BH?)")
 parser.add_argument('-invl', '--Invlength', type=int, default=-1, metavar='', help="length of the inversion (time)")
 parser.add_argument('-gf', '--GreenFunction', type=str, default='0', metavar='', help="The name of the GF folder")
@@ -90,8 +90,6 @@ parser.add_argument('-taper2', '--Taper2', type=int, default=0, metavar='', help
 ####################################################################################################################
 # Running the code:
 # python3.6 tdmtw_mseed.py -ot 2020-12-05T12:44:40 -lat 36.05 -lon 31.81 -d 98 -m 5.3 -fmin 0.02 -fmax 0.05 -c KOERI
-ipSC3 = "10.0.3.15"  # '199.71.138.39'
-#NTW = "IS,GE,CQ,BK,IU,KO"  #
 NTW = "*"
 dTime_search = 50
 Dist_max = 80
@@ -332,96 +330,7 @@ def AUTOPICK(tr):
 
 
 
-def GetClient(Lat0,Lon0,fdsn):
-    CLIENT_ISN = "http://82.102.143.46:8181"
 
-
-    fdsn_names = fdsn.split(',')
-    fdsn_l = len(fdsn_names)
-    if fdsn == 'AUTO':
-        Latmin = 28
-        Latmax = 36
-        Lonmin = 31
-        Lonmax = 37
-        if Lat0 > Latmin and Lat0 < Latmax and Lon0 > Lonmin and Lon0 < Lonmax:
-
-            out = 0
-            faultsT = 1
-            client = Client(CLIENT_ISN,user='wetzerna',password='Venus1')
-            print('Using ISN')
-            CLIENT = CLIENT_ISN
-        elif Lon0 < 0:
-            out = 1
-            faultsT = 2
-            # CLIENT = "http://service.iris.edu/"
-            CLIENT = "IRIS"
-            client = Client(CLIENT)
-            print('Using IRIS')
-        else:
-            CLIENT = "http://geofon.gfz-potsdam.de"
-            out = 1
-            faultsT = 2
-            client = Client(CLIENT)
-            print('Using GEOFON')
-    else:
-        print('Using %d servers' % fdsn_l)
-        servers = []
-
-        for ii in range(fdsn_l):
-            fdsn_name = fdsn_names[ii]
-            if fdsn_name == 'ISN':
-                out = 0
-                faultsT = 1
-                client = Client(CLIENT_ISN,user='wetzerna',password='Venus1')
-                CLIENT = CLIENT_ISN
-            elif fdsn_name == 'GFZ':
-                CLIENT = "http://geofon.gfz-potsdam.de"
-                out = 1
-                faultsT = 2
-                client = Client(CLIENT)
-            elif fdsn_name == 'RC':
-                client = RoutingClient("iris-federator")
-                #client = RoutingClient("eida-routing")
-                out = 1
-                faultsT = 2
-            elif fdsn_name == 'GNSr':
-                CLIENT = "http://service-nrt.geonet.org.nz"
-                # CLIENT = 'http://service.geonet.org.nz'
-                out = 1
-                faultsT = 2
-                client = Client(CLIENT)
-            elif fdsn_name == 'NOA':
-                CLIENT = "http://eida.gein.noa.gr/"
-                out = 1
-                faultsT = 2
-                client = Client(CLIENT)
-            elif fdsn_name == 'OVSICORI':
-                CLIENT = "http://10.10.128.91:8080"
-                out = 1
-                faultsT = 2
-                client = Client(CLIENT)
-            elif fdsn_name == 'GSI':
-                # CLIENT = 'http://172.16.46.102:8181'
-                CLIENT = 'http://172.16.46.102:8181'
-                client = Client(CLIENT)
-                out = 1
-                faultsT = 2
-            elif fdsn_name == 'SYNTH':
-                CLIENT = 'http://172.16.46.140:8181'
-                client = Client(CLIENT,user='test',password='test')
-                out = 1
-                faultsT = 2
-            else:
-                CLIENT = fdsn_name
-                out = 1
-                faultsT = 2
-                client = Client(CLIENT)
-            servers.append(client)
-            print('Using FDSN: %s %s' % (client.base_url, CLIENT))
-        client = servers
-
-
-    return client, out, faultsT, fdsn_l
 
 def INV_LENGTH_T(Mw0, useVal):
     if useVal > 0:
@@ -2408,7 +2317,7 @@ def MK_SEIS_FILES(Lat0,Long0, Depth0, Mw0,STN_LIST0S, Event, fdsn, MaxDist2stn, 
     if len(CHNP) < 4:
         print('length of ChanelPriority needs to be 4 like: "HBSH"')
 
-    clients, out, faultsT, fdsn_l = GetClient(Lat0,Long0,fdsn)
+    clients, out, faultsT, fdsn_l = GetClient(fdsn)
 
     Dist_max0,Dist_min0 = MW2DIST(Mw0)
 
@@ -3148,379 +3057,15 @@ if __name__ == '__main__':
         print("Testing EVENT !!!!")
 
 
-        args.Origintime = "2018-10-11T16:55:07" # Island
-        args.Lat0 =  30.9572
-        args.Long0 = 35.4711
-        args.Depth0 = 5
-        args.Mw0 = 2.4
-        args.Invlength = 20
-        args.Client = 'GSI'
-        args.STN_LIST0 = 'NTKR'
-        args.Fmin = 0.5
-        args.Fmax = 1.5
-        args.Taper2 = 1
-        args.Radious = 35
-        # args.GreenFunction = 'GREEN_DSB__0.1_0.0-0.0_fullNNN_1.0_99.0/MSEED/'
-
-        # args.Origintime = "2021-07-27T22:12:15" # Island
-        # args.Lat0 =  64.53
-        # args.Long0 = -17.53
-        # args.Depth0 = 10
-        # args.Mw0 = 5.0
-        # args.Client = 'IRIS'
-        # args.STN_LIST0 = 'BORG'
-        # args.Fmin = 0.02
-        # args.Fmax = 0.05
-
-        # args.Origintime = "2021-07-28T08:27:07" # DSB
-        # args.Lat0 =  31.156
-        # args.Long0 = 35.292
-        # args.Depth0 = 5
-        # args.Mw0 = 2.9
-        # args.Radious = 35
-        # args.Client = 'GSI'
-
-
-        # args.Origintime = "2019-05-15T16:53:49" # E.Med
-        # args.Lat0 =  32.77
-        # args.Long0 = 32.824
-        # args.Depth0 = 14
-        # args.Mw0 = 4.5
-        # args.Radious = 250
-        # args.Client = 'GSI,GFZ'
-        # # args.STN_LIST0 = 'IZRL'
-        # args.Fmin = 0.02
-        # args.Fmax = 0.05
-
-        # args.Origintime = " 2021-07-04T13:59:13" # south Galilee
-        # args.Lat0 =  32.444
-        # args.Long0 = 35.127
-        # args.Depth0 = 13
-        # args.Mw0 = 2.7
-        # args.Radious = 50
-        # args.Client = 'GSI'
-        # args.STN_LIST0 = 'IZRL'
-        # args.Fmin = 0.2
-        # args.Fmax = 1.5
-        # args.Invlength = 50
-
-        # args.Origintime = "2021-06-18T19:48:39" # Explosion Florida
-        # args.Lat0 =  29.742
-        # args.Long0 = -79.347
-        # args.Depth0 = 1
-        # args.Mw0 = 4.0
-        # args.Client = 'IRIS'
-        # args.STN_LIST0 = 'ALLA'
-        # args.Fmin = 0.015
-        # args.Fmax = 0.2
-        # args.Invlength = 180
-
-        # args.Origintime = "2021-06-17T05:37:58" # test by Andrey
-        # args.Lat0 =  31.92
-        # args.Long0 = 35.53
-        # args.Depth0 = 13
-        # args.Mw0 = 6.5
-        # args.Radious = 350
-        # args.Client = 'SYNTH'
-        # args.STN_LIST0 = 'ALLA'
-        # args.Fmin = 0.015
-        # args.Fmax = 0.2
-        # args.Invlength = 350
-
-
-        # args.Origintime = "2021-06-15T10:35:36" # test by Andrey
-        # args.Lat0 =  31.94
-        # args.Long0 = 35.51
-        # args.Depth0 = 14
-        # args.Mw0 = 6.5
-        # args.Radious = 350
-        # args.Client = 'SYNTH'
-        # args.STN_LIST0 = 'ALLA'
-        # args.Fmin = 0.015
-        # args.Fmax = 0.09
-        # args.Invlength = 350
-
-
-        # args.Origintime = "2021-06-08T10:22:59" # test
-        # args.Lat0 =  31.934 # 31.934 # SC3 31.9215 # 20/70/0 M0=7.19*10^18
-        # args.Long0 = 35.5136 # 35.5136 # SC3 35.6015 #
-        # args.Depth0 = 14
-        # args.Mw0 = 6.5
-        # args.Radious = 350
-        # args.Client = 'SYNTH'
-        # args.STN_LIST0 = 'LOD'
-        # args.Fmin = 0.02
-        # args.Fmax = 1.5
-        # args.Invlength = 80
-
-        # args.Origintime = "2021-06-08T13:10:41" # test
-        # args.Lat0 =  31.8714 # 31.8714 # SC3 31.8717
-        # args.Long0 = 35.5136 # 35.5136 # SC3 35.5008
-        # args.Depth0 = 14
-        # args.Mw0 = 5.3 # 5.03
-        # args.Radious = 450
-        # args.Client = 'SYNTH'
-        # args.STN_LIST0 = 'ALLA'
-        # args.Fmin = 0.02
-        # args.Fmax = 1.5
-        # args.Invlength = 30
-
-
-        # args.Origintime = "2020-01-14T00:25:24" # DSB
-        # args.Lat0 =  31.4864
-        # args.Long0 = 35.5224
-        # args.Depth0 = 14
-        # args.Mw0 = 2.4
-        # args.Fmin = 0.2
-        # args.Fmax = 1.5
-        # args.Radious = 50
-        # args.Client = 'ISN'
-        # args.STN_LIST0 = 'MSLM'
-        # args.Invlength = 20
-        # args.GreenFunction = 'GREEN_DSB__0.1_0.0-0.0_fullNNN_1.0_99.0/MSEED/'
-        # args.Taper2 = 1
-
-        # args.Origintime = "2021-05-31T06:23:41" # Cyprus
-        # args.Lat0 =  35.075
-        # args.Long0 = 32.769
-        # args.Depth0 = 31
-        # args.Mw0 = 4.0
-        # args.Fmin = 0.02
-        # args.Fmax = 0.05
-        # args.Radious = 350
-        # args.Client = 'IRIS'
-        # args.STN_LIST0 = 'MSLM'
-        # args.Invlength = 20
-        # args.GreenFunction = 'GREEN_DSB__0.1_0.0-0.0_fullNNN_1.0_99.0/MSEED/'
-        # args.Taper2 = 1
-
-        #
-        # args.Origintime = "2019-09-04T03:45:00" # DSB
-        # args.Lat0 =  31.16
-        # args.Long0 = 35.493
-        # args.Depth0 = 21
-        # args.Mw0 = 2.7
-        # args.Fmin = 0.2
-        # args.Fmax = 0.5
-        # args.Radious = 60
-        # args.Client = 'ISN'
-        # # args.STN_LIST0 = 'GHAJ'
-        # args.Invlength = 35
-        # # args.GreenFunction = 'GREEN_DSB__0.1_0.0-0.0_fullNNN_1.0_99.0/MSEED/'
-        # args.Taper2 = 1
-
-        # args.Origintime = "2019-10-14T15:55:43" # DSB
-        # args.Lat0 =  31.5098
-        # args.Long0 = 35.5137
-        # args.Depth0 = 13
-        # args.Mw0 = 3.0
-        # args.Fmin = 0.2
-        # args.Fmax = 0.5
-        # # args.Radious = 150
-        # args.Client = 'ISN'
-        # args.STN_LIST0 = 'GHAJ'
-        # args.GreenFunction = 'GREEN_DSB__0.1_0.0-0.0_fullNNN_1.0_99.0/MSEED/'
-        # args.Taper2 = 1
-
-        # args.Origintime = "2021-02-16T21:57:00" # Cyprus
-        # args.Lat0 =  34.539
-        # args.Long0 = 33.940
-        # args.Depth0 = 30
-        # args.Mw0 = 3.2
-        # args.Fmin = 0.02
-        # args.Fmax = 0.05
-        # args.Radious = 150
-        # args.Client = 'IRIS'
-        # args.STN_LIST0 = 'CY602'
-
-        # args.Origintime = "2021-03-03T10:16:11" # Grees
-        # args.Lat0 =  39.77
-        # args.Long0 = 22.14
-        # args.Depth0 = 10
-        # args.Mw0 = 6.3
-        # # args.Fmin = 0.02
-        # # args.Fmax = 0.05
-        # # args.Radious = 50
-        # args.Client = 'NOA'
-        # args.STN_LIST0 = 'APE'
-
-        # args.Origintime = "2019-04-29T12:07:25" # LRB
-        # args.Lat0 =  34.192
-        # args.Long0 = 36.152
-        # args.Depth0 = 1
-        # args.Mw0 = 3.8 # 3.1
-        # args.Fmin = 0.05
-        # args.Fmax = 0.1
-        # args.Radious = 500
-        # args.Client = 'ISN,KOERI'
-        # args.Invlength = 180
-
-        # args.Origintime = "2020-12-27T06:37:34" # Turkey
-        # args.Lat0 =  38.51
-        # args.Long0 = 39.32
-        # args.Depth0 = 10
-        # args.Mw0 = 5.4
-        # args.Fmin = 0.02
-        # args.Fmax = 0.05
-        # args.Radious = 350
-        # args.Client = 'KOERI'
-        # args.Invlength = 180
-
-        # args.Origintime = "2020-08-04T15:08:18" # Beirut blast
-        # args.Lat0 =  33.9
-        # args.Long0 = 35.52
-        # args.Depth0 = 0
-        # args.Mw0 = 5.5 # 3.1
-        # # args.STN_LIST0 = 'GHAJ'
-        # args.Client = 'ISN'
-        # args.dr0 = 2
-
-        # args.Origintime = "2020-06-16T14:30:27"
-        # args.Lat0 =  27.4
-        # args.Long0 = 34.69
-        # args.Depth0 = 5
-        # args.Mw0 = 5.2
-        # args.Client = 'ISN'
-        # args.STN_LIST0 = 'EIL'
-
-        # args.Origintime = "2020-11-30T16:36:29"
-        # args.Lat0 =  8.1103
-        # args.Long0 = -82.91
-        # args.Depth0 = 2
-        # args.Mw0 = 4.8
-        # args.Client = 'OVSICORI'
-        # args.STN_LIST0 = 'PEZE'
-        # args.Fmin = 0.02
-        # args.Fmax = 0.05
-        # args.Radious = 200
-
-        # args.Origintime = "2020-09-15T09:24:02"
-        # args.Lat0 =  32.505
-        # args.Long0 = 35.199
-        # args.Depth0 = 2
-        # args.Mw0 = 5.2
-        # args.Client = 'ISN'
-        # args.STN_LIST0 = 'EIL'
-
-        # args.Origintime = "2020-09-01T07:52:03"
-        # args.Lat0 =  31.19
-        # args.Long0 = 35.32
-        # args.Depth0 = 1
-        # args.Mw0 = 2.5
-        # args.Client = 'ISN'
-        # args.STN_LIST0 = 'ALLA'
-
-        # args.Origintime = "2020-08-11T08:40:25"
-        # args.Lat0 =  32.98
-        # args.Long0 = 35.49
-        # args.Depth0 = 10
-        # args.Mw0 = 3.7 # 3.1
-        # args.Client = 'ISN'
-        # args.STN_LIST0 = 'MRON'
-
-
-        # args.Origintime = "2020-03-22T05:24:02"
-        # args.Lat0 =  45.88
-        # args.Long0 = 15.99
-        # args.Depth0 = 5
-        # args.Mw0 = 5.3 # 3.1
-
-        # args.Origintime = "2018-07-04T19:51:24"
-        # args.Lat0 =  32.8406
-        # args.Long0 = 35.5809
-        # args.Depth0 = 5
-        # args.Mw0 = 2.6 # 3.5
-        # args.Client = 'ISN'
-        # args.STN_LIST0 = 'ALLA'
-
-
-
-        # args.Origintime = "2019-11-25T11:39:31"
-        # args.Lat0 =  31.3502
-        # args.Long0 = 35.5328
-        # args.Depth0 = 12
-        # args.Mw0 = 3.5 # 3.5
-        # args.Client = 'ISN'
-        # args.Radious = 70
-        # args.ChannelPriority = 'EEEE'
-        # args.Invlength = 30
-
-        # args.Origintime = "2019-09-25T23:46:46.1"
-        # args.Lat0 =  -3.56
-        # args.Long0 = 128.45
-        # args.Depth0 = 10
-        # args.Mw0 = 6.3
-        # args.Client = 'GFZ'
-        # args.AUTOMODE = 1
-
-
-        # args.Origintime = "2019-11-01T05:25:46"
-        # args.Lat0 =  40.5
-        # args.Long0 = 20.79
-        # args.Depth0 = 10
-        # args.Mw0 = 5.4
-        # # args.Client = 'ISN'
-        # args.AUTOMODE = 1
-
-        # args.Origintime = "2019-11-01T18:40:41.32"
-        # args.Lat0 = 32.8636
-        # args.Long0 = 35.5706
-        # args.Depth0 = 8
-        # args.Mw0 = 3.2
-        # args.Client = 'ISN'
-        # args.AUTOMODE = 0
-
-        # args.Origintime = "2018-07-04T01:50:07.39"
-        # args.Lat0 = 32.8471
-        # args.Long0 = 35.5905
-        # args.Depth0 = 7
-        # args.Mw0 = 4.2
-        # args.Client = 'ISN'
-        # args.STN_LIST0 = 'ALLB'
-        # args.Radious = 20
-        # args.Invlength = 30
-
-        # args.Origintime = "2019-10-14T15:55:43"
-        # args.Lat0 = 31.510
-        # args.Long0 = 35.514
-        # args.Depth0 = 13
-        # args.Mw0 = 3.0
-        # args.Client = 'ISN'
-
-        # print("Testing EVENT Local!!!!")
-        # args.Origintime = "2019-09-16T10:35:31"
-        # args.Lat0 = 29.975
-        # args.Long0 = 34.403
-        # args.Depth0 = 7
-        # args.Mw0 = 3.6
-        # args.STN_LIST0 = 'EIL'
-
-        # args.Origintime = "2019-08-08T11:25:31.0"
-        # args.Lat0 =  37.94
-        # args.Long0 = 29.59
-        # args.Depth0 = 10
-        # args.Mw0 = 5.7
-        # args.Client = 'GFZ'
-        # args.AUTOMODE = 0
-        # args.STN_LIST0 = 'APE'
-
-
-        # args.Origintime = "1995-11-22T04:15:11"
-        # args.Lat0 =  28.5
-        # args.Long0 = 34.6
-        # args.Depth0 = 15
-        # args.Mw0 = 7.2
-        # args.Client = 'GFZ'
-        # args.AUTOMODE = 0
-        # args.GreenFunction = 'GREEN_Git05__1.0_0.02-0.05_fullNN/'
-
-        # args.Origintime = "2019-05-15T16:53:47.4"
-        # args.Lat0 =  32.8107
-        # args.Long0 = 32.7967
-        # args.Depth0 = 10
-        # args.Mw0 = 5.7
-        # args.Client = 'GFZ'
-        # args.AUTOMODE = 0
+        args.Origintime = "2021-07-27T22:12:15" # Island
+        args.Lat0 =  64.53
+        args.Long0 = -17.53
+        args.Depth0 = 10
+        args.Mw0 = 5.0
+        args.Client = 'IRIS'
+        args.STN_LIST0 = 'BORG'
+        args.Fmin = 0.02
+        args.Fmax = 0.05
 
 
         # args.Origintime = "2019-09-30T11:53:21"
