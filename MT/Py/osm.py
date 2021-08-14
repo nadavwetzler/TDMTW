@@ -18,7 +18,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 # *********************************************************************************
 import sys
-#sys.path.insert(0, '/Users/nadavwetzler/Dropbox/Moment-tensor/Py_MT/TDMTW/')
 import numpy as np
 import scipy.misc
 try:
