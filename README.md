@@ -1,6 +1,11 @@
 # TDMTW
 A full moment tensor solver
 
+
+More information will be published soon
+
+Please contact me directly if you have any questions: nadav.wetzler@gmail.com
+
 # FDSN server
 
 
