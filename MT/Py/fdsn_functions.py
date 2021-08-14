@@ -10,12 +10,8 @@ def GetClient(fdsn):
 
     for ii in range(fdsn_l):
         fdsn_name = fdsn_names[ii]
+        
         if fdsn_name == 'GFZ':
-            out = 0
-            faultsT = 1
-            client = Client(Client_def)
-            CLIENT = Client_def
-        elif fdsn_name == 'GFZ':
             CLIENT = "http://geofon.gfz-potsdam.de"
             out = 1
             faultsT = 2
