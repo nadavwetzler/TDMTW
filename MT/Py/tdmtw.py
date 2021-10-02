@@ -48,7 +48,6 @@ from obspy.taup import TauPyModel
 from osm import OSM as OSM
 from matplotlib import pyplot as plt
 from obspy.imaging.beachball import beach, MomentTensor, mt2axes, mt2plane, aux_plane
-from mpl_toolkits.basemap import Basemap
 from obspy.signal.cross_correlation import xcorr
 from obspy.geodetics import FlinnEngdahl
 from fdsn_functions import *
@@ -1804,50 +1803,27 @@ def PlotMomentTensor(idfig, DEPTH, Depth0, VR, Sampl4inv, FMS,
     llon = Long0 - dll #32.0
     ulon = Long0 + dll # 37.0
 
-    plot_map_basemap = 0
 
     Long01 = Long0 + np.cos(45) * (dll/2.5)
     Lat01 = Lat0 + np.sin(45) * (dll/2.5)
 
-    if plot_map_basemap == 1:
-        m = Basemap(projection='cyl', lon_0=Long0, lat_0=Lat0,
-                    llcrnrlon=llon,llcrnrlat=llat,urcrnrlon=ulon,urcrnrlat=ulat, resolution='i')
-        m.fillcontinents(color='wheat', lake_color='skyblue')
-        m.drawmapboundary(fill_color='skyblue')
-        m.drawparallels(np.arange(llat, ulat, (ulat - llat) / 4.0), labels=[1,0,0,0],fontsize=10, fmt="%.2f")
-        m.drawmeridians(np.arange(llon, ulon, (ulon - llon) / 4.0), labels=[0,0,0,1],fontsize=10, fmt="%.2f")
-        m.drawcoastlines()
-
-        ax1 = plt.gca()
-        m.scatter(Long0, Lat0, 50, color="r", marker=(5, 1), edgecolor="k")
-        # b = beach(FMS[pos_Mw, 0:3], xy=(Long0, Lat0),width=dll/10, linewidth=0.1, facecolor='b')
-        b = beach(MT[pos_Mw, 0:6], xy=(Long0, Lat0),width=dll/10, linewidth=0.1, facecolor='k')
-        ax1.add_collection(b)
-        x0, y0 = m(LON_STN, LAT_STN)
-        m.scatter(x0, y0, 50, color="g", marker="v", edgecolor="k")
-        for i in range(nsta):
-            plt.text(x0[i], y0[i], stn_F[i], va="top", family="monospace", weight="bold")
-
-        for shape in faults1.shapeRecords():
-            x = [i[0] for i in shape.shape.points[:]]
-            y = [i[1] for i in shape.shape.points[:]]
-            plt.plot(x,y, color="k", linewidth=0.8)
-    else:
-        ax1 = plt.gca()
-        for shape in faults1.shapeRecords():
-            x = [i[0] for i in shape.shape.points[:]]
-            y = [i[1] for i in shape.shape.points[:]]
-            ax1.plot(x,y, color="k", linewidth=0.8)
-        ax1.scatter(LON_STN,LAT_STN,s=150,marker='v', color='g')
-        for i in range(len(LON_STN)):
-            ax1.text(LON_STN[i], LAT_STN[i], stn_F[i], va="top", family="monospace", weight="bold")
-        ax1.plot([Long0, Long01], [Lat0, Lat01], color='k')
-        ax1.set_xlim([llon, ulon])
-        ax1.set_ylim([llat, ulat])
-        # b = beach(FMS[pos_Mw, 0:3], xy=(Long01, Lat01),width=dll/5, linewidth=0.1, facecolor='b')
-        b = beach(MT[pos_Mw, 0:6], xy=(Long01, Lat01),width=dll/5, linewidth=0.1, facecolor='k')
-        ax1.add_collection(b)
-        ax1.osm = OSM(ax1)
+    
+    
+    ax1 = plt.gca()
+    for shape in faults1.shapeRecords():
+        x = [i[0] for i in shape.shape.points[:]]
+        y = [i[1] for i in shape.shape.points[:]]
+        ax1.plot(x,y, color="k", linewidth=0.8)
+    ax1.scatter(LON_STN,LAT_STN,s=150,marker='v', color='g')
+    for i in range(len(LON_STN)):
+        ax1.text(LON_STN[i], LAT_STN[i], stn_F[i], va="top", family="monospace", weight="bold")
+    ax1.plot([Long0, Long01], [Lat0, Lat01], color='k')
+    ax1.set_xlim([llon, ulon])
+    ax1.set_ylim([llat, ulat])
+    # b = beach(FMS[pos_Mw, 0:3], xy=(Long01, Lat01),width=dll/5, linewidth=0.1, facecolor='b')
+    b = beach(MT[pos_Mw, 0:6], xy=(Long01, Lat01),width=dll/5, linewidth=0.1, facecolor='k')
+    ax1.add_collection(b)
+    ax1.osm = OSM(ax1)
 
 
 
