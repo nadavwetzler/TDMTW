@@ -50,7 +50,7 @@ You can make your own GF by running GF/Py/mk_Green_functions.py
 
 Velocity model is used from GF/models/ .Use Gitt02.csv as a tamplate
 
-Or you can download the Israel GF from my dropbox from https://www.dropbox.com/sh/i4v38eukn001sbj/AABj35JHfR-7MSk9GfOrD9Xma?dl=0
+Or you can download the compressed Israel GF from my dropbox from https://www.dropbox.com/s/gp7pokem008cl56/GREEN_GitHDUF05__0.1_0.0-0.0_fullNNN_5.0_495.0.zip?dl=0
 
 Documantation is still in progress... More shold be added in the near future
 
