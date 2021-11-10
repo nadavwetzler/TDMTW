@@ -15,7 +15,8 @@ Saikia, C.K., 1994. Modified frequency‐wavenumber algorithm for regional seism
 
 Wetzler, N., Shalev, E., Göbel, T., Amelung, F., Kurzon, I., Lyakhovsky, V., Brodsky, E.E., 2019. Earthquake swarms triggered by groundwater extraction near the Dead Sea Fault. Geophys. Res. Lett. 46, 2019GL083491. https://doi.org/10.1029/2019GL083491
 
-
+# Please don't forget to site if you use this code:
+Wetzler, N., Sagy, A., Marco, S., Reches, Z., 2021. Asymmetry of faults and stress patterns within the Dead Sea basin as displayed by seismological analysis. Tectonophysics 229069. https://doi.org/10.1016/j.tecto.2021.229069
 
 # Run
  As a test case I chose one of the M4 along the main Dead Sea Transform - a left lateral strike-slip fault system.
