@@ -98,7 +98,7 @@ time_before_origin = 90  # seconds before t0
 n_corners = 4
 thresh_s2n = 10
 dDays = 30  # number of days for seismicity plot
-
+def_green_folder = 'GREEN_GitHDUF05__0.1_0.0-0.0_fullNNN_5.0_495.0/MSEED/'
 ####################################################################################################################
 
 def _get_resource_id(event_name, res_type, tag=None):
@@ -490,10 +490,10 @@ def Green2ggMSEED(GRN, vol_p, cutlow, fcuthigh, dt0):
             gg[ii][9][:] = GRN1[9].data * -1.0
     return gg
 
-def whichGreen(Mw0, out, GF0, Fmin0, Fmax0):
+def whichGreen(Mw0, out, GF0, Fmin0, Fmax0, def_green_folder):
     min_depth = 1
     if GF0 == '0':
-        Green = 'GREEN_GitHDUF05__0.1_0.0-0.0_fullNNN_5.0_495.0/MSEED/'
+        Green = def_green_folder
         max_depth = 99
         dt = 0.1
 
@@ -2314,7 +2314,7 @@ def MK_SEIS_FILES(Lat0,Long0, Depth0, Mw0,STN_LIST0S, Event, fdsn, MaxDist2stn, 
     else:
         Origine_time = UTCDateTime(Event)
 
-    Green, Min_Depth, Max_Depth, fcutlow, fcuthigh, dt0 = whichGreen(Mw0, out, GF0, Fmin0, Fmax0)
+    Green, Min_Depth, Max_Depth, fcutlow, fcuthigh, dt0 = whichGreen(Mw0, out, GF0, Fmin0, Fmax0, def_green_folder)
     GFtype0 =  Green.split('_')
     GFtype = GFtype0[1]
     Sampl4inv, dPt1 = INV_LENGTH_T(Mw0, invlength0)
