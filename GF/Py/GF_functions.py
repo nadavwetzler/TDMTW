@@ -28,7 +28,7 @@ def mk_DIST(DIST0):
 
 
 def set_path_gf(name, path2folder,  dt0, f_low, f_high, DIST1, DIST2):
-    Path2_Green = '%s/GREEN_%s__%s_%s-%s_fullNNN_%s_%s/' % (path2folder, name[0 : -1], dt0, f_low, f_high, DIST1, DIST2)
+    Path2_Green = '%s/GREEN_%s__%s_%s-%s_fullNNN_%s_%s/' % (path2folder, name, dt0, f_low, f_high, DIST1, DIST2)
 
     if os.path.exists(Path2_Green):
         os.chdir(Path2_Green)
@@ -187,7 +187,7 @@ def mk_gf1(MODEL, MODELN, DEPTH, npts0,dt0, Path2_bin, Path2_Green,MT_F, DIST, R
 
 
     # write model file
-    MT_F_name = Path2_Green +'/'+ MT_F + str(DEPTH) + ".model.txt"
+    MT_F_name = Path2_Green +'/'+ MT_F +"_" + str(DEPTH) + ".model.txt"
     mtf = open(MT_F_name, 'w')
     mtf.write('.F.\n')
     mtf.write('    0   64\n')
@@ -280,8 +280,8 @@ def mk_gf1(MODEL, MODELN, DEPTH, npts0,dt0, Path2_bin, Path2_Green,MT_F, DIST, R
     fk_P.write('window v0=$vshift e0=0 nt=$npts nx=$nvec nv=1 < vec > tmp9$$\n')
     fk_P.write('cat tmp1$$ tmp2$$ tmp3$$ tmp4$$ tmp5$$ tmp6$$ tmp7$$ tmp8$$ tmp9$$ tmp10$$ > junk\n')
     fk_P.write('echo $j\n')
-    fk_P.write('mkHelm format="(6e13.5)" ntr=10 dt=$dt nt=$npts < junk > %s{$dist[$j]}d{$depth}.disp\n' % MT_F[0 : -1])
-    fk_P.write('./run_filtsyniso %s{$dist[$j]}d{$depth}.disp %s{$dist[$j]}d{$depth}\n' % (MT_F[0 : -1], MT_F[0 : -1]))
+    fk_P.write('mkHelm format="(6e13.5)" ntr=10 dt=$dt nt=$npts < junk > %s_{$dist[$j]}d{$depth}.disp\n' % MT_F)
+    fk_P.write('./run_filtsyniso %s_{$dist[$j]}d{$depth}.disp %s_{$dist[$j]}d{$depth}\n' % (MT_F, MT_F))
     fk_P.write('rm tmp*$$\n')
     fk_P.write('@ i += 10\n')
     fk_P.write('@ count++\n')
