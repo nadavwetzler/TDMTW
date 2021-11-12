@@ -109,7 +109,6 @@ def _get_resource_id(event_name, res_type, tag=None):
 def MK_MT_event(MT, ot, latitude, longitude, event_name, MWz, VR, DEPTH, Mo, GFtype, pdc, pclvd, piso, FMSp, STN_LISTN):
     """
     reference from: https://docs.obspy.org/_modules/obspy/io/cmtsolution/core.html
-
     :param MT:
     :param ot:
     :param latitude:
@@ -608,7 +607,7 @@ def LOAD_STN_SEIS(stn_name, chn, Pt, Sampl4inv, client, dPt1, Taper0, rot_angl,I
                                                            attach_response=True)
 
             # SEIStmp.plot()
-            
+
 
 
             if Taper0 > 0:
@@ -1738,8 +1737,8 @@ def PlotMomentTensor(idfig, DEPTH, Depth0, VR, Sampl4inv, FMS,
     Long01 = Long0 + np.cos(45) * (dll/2.5)
     Lat01 = Lat0 + np.sin(45) * (dll/2.5)
 
-    
-    
+
+
     ax1 = plt.gca()
     for shape in faults1.shapeRecords():
         x = [i[0] for i in shape.shape.points[:]]
@@ -1957,7 +1956,7 @@ def calc_ggN_mean(ggN, dmn):
         for jj in range(n2-dmn):
             ggNM[ii,jj] = np.mean(ggN[ii,jj:jj+dmn])
     return ggNM
-        
+
 def find_len_taper(ggNM,minA):
     n1,n2 = ggNM.shape
     len_taper = np.zeros(n1)
@@ -2030,7 +2029,6 @@ def MakeMTpyFiles(Zcor, Sampl4inv, zz,sg,ss,MM, N_STN, data_Tp, data_Rp, data_Zp
 def TDMTRUN(Depth0, Lat0, Long0, GFtype, Green, STN_LISTN, DIST, BAZ, LAT_STN, LON_STN,
             SEIS_DISP_ROT_F, Sampl4inv, smpl, D1, D2, vol_p, ZCORS, faultsT, AUTOMODE, Event, SEIS0, fcutlow, fcuthigh,Taper2):
     """
-
     :param Depth0: Catalog depth
     :param Lat0: origine latitude location
     :param Long0: origine longitude location
@@ -2099,7 +2097,7 @@ def TDMTRUN(Depth0, Lat0, Long0, GFtype, Green, STN_LISTN, DIST, BAZ, LAT_STN, L
 
         # Make green function files
         gg = Green2ggMSEED(GRN, vol_p, fcutlow, fcuthigh, smpl)
-        
+
         # make a proxy for taper length from gf
         if Taper2 == 1:
             ggN = sum_gg(gg)
@@ -2107,7 +2105,7 @@ def TDMTRUN(Depth0, Lat0, Long0, GFtype, Green, STN_LISTN, DIST, BAZ, LAT_STN, L
             ggNM = calc_ggN_mean(ggN, dmn)
             len_taper, first_L = find_len_taper(ggNM,0.01)
             ss = taper_ss(ss,len_taper, first_L)
-        
+
         # Calculate cross correlation
         ZcorX1 = Correlate3(ss,gg,0)
 
@@ -2153,71 +2151,6 @@ def TDMTRUN(Depth0, Lat0, Long0, GFtype, Green, STN_LISTN, DIST, BAZ, LAT_STN, L
 
 
 
-def GETEVENT4TDMT(Event, dTime_search):
-
-    #-------------READ ANTELOPE CATALOG -----------------------------
-
-    file_LOC = '/Users/nadavwetzler/Dropbox/Public/DataSet/AllIsrael/All_Israel_1900-082018/Gitterman2005/Reloc_GII_1900-082018_Gitt05_Origins.txt'
-    LatC = []
-    LonC = []
-    DepC = []
-    MagC = []
-    DTVC = []
-    f_LOC=open(file_LOC)
-    lines=f_LOC.readlines()
-    for jj in range(1, len(lines)):
-        line = lines[jj].split()
-        LatC.append(line[2])
-        LonC.append(line[3])
-        DepC.append(line[4])
-        MagC.append(line[10])
-        YMD = line[5].split('/')
-        HMS = line[7]
-        date = line[5].split()
-        datetime = UTCDateTime(YMD[2]+'-'+YMD[0]+'-'+YMD[1]+'T'+HMS)
-        DTVC.append(datetime)
-
-    #CLIENT = "http://82.102.143.46:8181"
-    #client = Client(CLIENT)
-
-    #------------------ Get event info and stations------------------
-
-    Origine_time = UTCDateTime(Event[0])
-
-    dTt = np.asarray(DTVC) - Origine_time
-    pos = np.argmin(abs(dTt))
-    mint = min(abs(dTt))
-    if mint > 3:
-        print('Could not fine event in catalog')
-        cat = client.get_events(starttime=Origine_time-dTime_search, endtime=Origine_time+dTime_search, includearrivals=True)
-        posCat = 0
-        if len(cat) > 1:
-            print("None single event is retrieved! reducing catalog to the nearest...")
-            t3 = []
-            for jj in range(len(cat)):
-                t3.append(cat.events[jj].origins[0].time)
-            t3v = np.asarray(t3)
-            posCat = np.argmin(abs(t3v - Origine_time))
-            cat = cat[posCat]
-            # sys.exit("None single event is retrieved! use smaller dTime_search")
-        elif len(cat) == 0:
-            sys.exit("Event is not found! use larger dTime_search or specify location ")
-        Lat0 = cat.events[0].origins[posCat].latitude
-        Long0 = cat.events[0].origins[posCat].longitude
-        Time0 = cat.events[0].origins[posCat].time
-        Depth0 = cat.events[0].origins[posCat].depth/1000.0
-        M0 = cat.events[0].magnitudes[0].mag
-        print("Event found in relocataed catalog, using relocation coordinates")
-    else:
-        Lat0 = float(LatC[pos])
-        Long0=float(LonC[pos])
-        Depth0=round(float(DepC[pos]))
-        M0 = float(MagC[pos])
-
-    if Depth0 < 1:
-        Depth0 = 1
-
-    return Lat0, Long0, Depth0, M0
 
 
 def MK_SEIS_FILES(Lat0,Long0, Depth0, Mw0,STN_LIST0S, Event, fdsn, MaxDist2stn, MinDist2stn, CHNP, invlength0, GF0, Fmin0, Fmax0, Taper0):
@@ -2355,7 +2288,7 @@ def MK_SEIS_FILES(Lat0,Long0, Depth0, Mw0,STN_LIST0S, Event, fdsn, MaxDist2stn, 
                                 ok_stn = 0
                                 print('Station %s not found in inventory' % STN_LIST0[ii])
             else:
-                ok_stn = 0 
+                ok_stn = 0
             # if STN_LIST0[ii] == 'MMA0B':
             #     print('Excluding MMA0B')
             #     ok_stn = 0
@@ -2964,13 +2897,16 @@ if __name__ == '__main__':
         print("Testing EVENT !!!!")
 
 
+
         args.Origintime = "2021-06-15T23:08:54"
         args.Lat0 = 30.099
         args.Long0 = 35.178
         args.Depth0 = 21
         args.Mw0 = 4.1
         args.Client = 'GFZ'
-        
+        # args.STN_LIST0 = 'EIL'
+
+
 
     if not args.Client:
         print('Automated selection of FDSN server')
@@ -2980,5 +2916,3 @@ if __name__ == '__main__':
 
 
     run_TDMTW([args.Origintime], args.AUTOMODE, args.STN_LIST0, args.Lat0, args.Long0, args.Depth0, args.Mw0, args.Client, args.DepthRang, args.Radious, args.Radious0, args.ChannelPriority, args.Invlength, args.GreenFunction, args.Fmin, args.Fmax, args.Taper, args.Taper2)
-
-
