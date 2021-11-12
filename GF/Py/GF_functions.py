@@ -28,7 +28,7 @@ def mk_DIST(DIST0):
 
 
 def set_path_gf(name, path2folder,  dt0, f_low, f_high, DIST1, DIST2):
-    Path2_Green = '%s/GREEN_%s_%s_%s-%s_fullNNN_%s_%s/' % (path2folder, name[0 : -1], dt0, f_low, f_high, DIST1, DIST2)
+    Path2_Green = '%s/GREEN_%s__%s_%s-%s_fullNNN_%s_%s/' % (path2folder, name[0 : -1], dt0, f_low, f_high, DIST1, DIST2)
 
     if os.path.exists(Path2_Green):
         os.chdir(Path2_Green)
