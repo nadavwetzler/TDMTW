@@ -51,7 +51,6 @@ DIST0 = np.arange(1, 500, 5)  # SET DISTANCES FOR GREEN FUNCTION
 
 # [4] ----------------------- PARAMETERS   ----------------------------------------
 # do not change!
-dH = 0.05 # Thickness of artificial layer in case Z == layer interface
 f_low = 0.0
 f_high = 0.0
 npts0 = 4096
