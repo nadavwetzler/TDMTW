@@ -2964,33 +2964,13 @@ if __name__ == '__main__':
         print("Testing EVENT !!!!")
 
 
-        args.Origintime = "2021-07-27T22:12:15" # Island
-        args.Lat0 =  64.53
-        args.Long0 = -17.53
-        args.Depth0 = 10
-        args.Mw0 = 5.0
-        args.Client = 'IRIS'
-        args.STN_LIST0 = 'BORG'
-        args.Fmin = 0.02
-        args.Fmax = 0.05
-
-
-        # args.Origintime = "2019-09-30T11:53:21"
-        # args.Lat0 = -22.23
-        # args.Long0 = -68.66
-        # args.Depth0 = 110.0
-        # args.Mw0 = 5.6
-        # args.Client = 'GFZ'
-        # args.AUTOMODE = 1
-
-
-        # args.Origintime = "2019-11-27T07:23:40"
-        # args.Lat0 = 35.7
-        # args.Long0 = 23.19
-        # args.Depth0 = 54.0
-        # args.Mw0 = 6.0
-        # args.Client = 'GFZ'
-        # args.AUTOMODE = 0
+        args.Origintime = "2021-06-15T23:08:54"
+        args.Lat0 = 30.099
+        args.Long0 = 35.178
+        args.Depth0 = 21
+        args.Mw0 = 4.1
+        args.Client = 'GFZ'
+        
 
     if not args.Client:
         print('Automated selection of FDSN server')
