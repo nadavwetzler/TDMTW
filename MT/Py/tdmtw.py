@@ -54,7 +54,6 @@ from fdsn_functions import *
 
 _fe = FlinnEngdahl()
 FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
-sys.path.insert(0, '/Users/nadavwetzler/Dropbox/Moment-tensor/Py_MT/TDMTW/')
 model = TauPyModel(model="iasp91")
 matplotlib.use("TkAgg")
 font0 = FontProperties()
@@ -85,10 +84,7 @@ parser.add_argument('-fmin', '--Fmin', type=float, default=0, metavar='', help="
 parser.add_argument('-taper', '--Taper', type=float, default=0, metavar='', help="Taper ratio right after download")
 parser.add_argument('-taper2', '--Taper2', type=int, default=0, metavar='', help="Taper the inverted waveforms")
 
-# parser.add_argument('-c', '--Client', type=str, default='ISN', metavar='', help="Choose FDSN server like: ISN, IRIS, ORFEUS, GFZ, KOERI, https://www.fdsn.org/webservices/datacenters/")
 ####################################################################################################################
-# Running the code:
-# python3.6 tdmtw_mseed.py -ot 2020-12-05T12:44:40 -lat 36.05 -lon 31.81 -d 98 -m 5.3 -fmin 0.02 -fmax 0.05 -c KOERI
 NTW = "*"
 dTime_search = 50
 Dist_max = 80
@@ -214,12 +210,6 @@ def MK_MT_event(MT, ot, latitude, longitude, event_name, MWz, VR, DEPTH, Mo, GFt
 
     return ev
 
-#
-# def GetIP():
-#     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#     s.connect(("8.8.8.8", 80))
-#     ip0 = s.getsockname()[0]
-#     return ip0
 
 def ReplacetoHome(ff):
     path0 = (os.path.expanduser('~'))
@@ -307,28 +297,10 @@ def AUTOPICK(tr):
     # Get P use STA/LTA:
     df = tr.stats.sampling_rate
     cft1 = classic_sta_lta(tr.data, int(5 * df), int(10 * df))
-    #cft2 = recursive_sta_lta(tr.data, int(5 * df), int(10. * df))
     on_of = trigger_onset(cft1, 1.5, 0.5)
     Pt = on_of[0, 0] / df
     PtT = tr.stats.starttime + Pt
-    # plotSTALTA = 1
-    # if plotSTALTA == 1: # Plotting the sta/lta results
-    #     fig500 = plb.figure(500)
-    #     ax = fig500.add_subplot(N_STN*2,1,ii+1)
-    #     ax.plot(tr0.data, 'k')
-    #     ax.set_ylabel(STNC[nn])
-    #     ymin, ymax = ax.get_ylim()
-    #     plb.vlines(on_of[:, 0], ymin, ymax, color='r', linewidth=2)
-    #     plb.vlines(on_of[:, 1], ymin, ymax, color='b', linewidth=2)
-    #     plb.subplot(N_STN*2,1,2*(ii+1), sharex=ax)
-    #     plb.plot(cft2, 'k')
-    #     plb.hlines([1.5, 0.5], 0, len(cft2), color=['r', 'b'], linestyle='--')
-    #     plb.axis('tight')
-    #     plb.show()
     return Pt, PtT
-
-
-
 
 
 def INV_LENGTH_T(Mw0, useVal):
@@ -364,7 +336,6 @@ def DISP_ROT_FILT(SEIS1, az, cutlow, fcuthigh, n_corners, dt0, dPt1):
     else:
         wl = 60
     SEIS.detrend("linear")
-    #SEIS.detrend("demean")
     SEIS.taper(max_percentage=dPt1/TimeT, type='cosine')
     try:
         SEIS.remove_response(output="DISP", taper=True, water_level= wl, pre_filt=pre_filt0)
@@ -393,47 +364,7 @@ def DISP_ROT_FILT(SEIS1, az, cutlow, fcuthigh, n_corners, dt0, dPt1):
     SEIS.interpolate(sampling_rate=int(1/dt0), npts=int(TimeT / dt0))
     return SEISRD, SEIS
 
-# def MSEED2GF(GRN0, depth, dist0, name0):
-#     '''
-#
-#     '''
-#
-#     # Find closest distance from availble GF
-#     Distv = []
-#     Depthv = []
-#     for ii in range(len(GRN0)):
-#         Distv.append(float(GRN0[ii].stats.station))
-#         Depthv.append(float(GRN0[ii].stats.location))
-#     Distv = set(Distv)
-#     Depthv = set(Depthv)
-#     DIST = np.asarray(Distv)
-#     pos = np.argmin(np.abs(DIST - dist0))
-#     dist = GRN0.DIST[pos]
-#     if np.abs(dist-dist0) > 5:
-#         print("GF is different than stn dist by 5 km!!")
-#
-#     name = "%s%sd%sN" %(name0, dist, depth)
-#     SEIS = GRN0.select(station=dist, location=depth, channel="?")
-#     S2H = open(name, 'w')
-#     format = '6e12.5'
-#     S2H.write('      10\n')
-#     S2H.write('(%s)\n' % format)
-#     for gg in range(10):
-#         tr = SEIS.select(component = (gg +1))
-#         tr = tr[0]
-#         ltr = len(tr)
-#         S2H.write('     0.0000e+00     0.0000e+00      0  0  0.00\n')
-#         S2H.write('%d %f   0.0000e+00\n' % (ltr, tr.stats.delta))
-#         ntr = int(np.floor(ltr / 6))
-#         ntrl = ltr - ntr*6
-#         for jj in range(ntr):
-#             S2H.write('%12.5e %12.5e %12.5e %12.5e %12.5e %12.5e\n'
-#                       % (tr[jj*6], tr[jj*6+1], tr[jj*6+2], tr[jj*6+3], tr[jj*6+4], tr[jj*6+5]))
-#         if ntrl > 0:
-#             for jj in range(ntrl):
-#                 S2H.write('%12.5e ' % tr[6*ntr + jj])
-#             S2H.write('\n')
-#     S2H.close()
+
 
 def decimate2lowsmpl(SEIS):
     ll = len(SEIS)
