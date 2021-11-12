@@ -143,6 +143,8 @@ def mk_perl1(Path2_Green, dt0, npts0, f_high, f_low):
 
 
 def mk_gf1(MODEL, MODELN, DEPTH, npts0,dt0, Path2_bin, Path2_Green,MT_F, DIST, ReductionVel):
+    dH = 0.05 # Thickness of artificial layer in case Z == layer interface
+
     if os.path.exists('GREEN.1'): os.remove('GREEN.1')
 
     # Find the closest interface to selected depth
