@@ -30,21 +30,37 @@ import pathlib
 from GF_functions import *
 
 
+# [1] ----------------------- SET PATHS --------------------------------------
 path2folder = pathlib.Path('../GFF').resolve()
 Path2_bin = pathlib.Path('../BIN_HighSierra').resolve()
+# Path2_bin = pathlib.Path('../BIN_Linux').resolve()
 path2model = pathlib.Path('../models').resolve()
-#--------------------Set PARAMETERS --------------------
-MT_F = 'Gitt02'
-DEPTH = np.arange(0, 50, 1)  # SET DEPTH RANGE
-DIST0 = np.arange(1, 100, 1)  # SET DISTANCES FOR GREEN FUNCTION
+# [2] ----------------------- MODEL   ----------------------------------------
+# MT_F = 'Gitt02'
+MT_F = 'AK135'
+
+
+# [3] ----------------------- RANGE   ----------------------------------------
+
+DEPTH = np.arange(0, 100, 1)  # SET DEPTH RANGE
+DIST0 = np.arange(1, 500, 5)  # SET DISTANCES FOR GREEN FUNCTION
+# DEPTH = np.arange(5, 10, 5)  # SET DEPTH RANGE
+# DIST0 = np.arange(30, 100, 10)  # SET DISTANCES FOR GREEN FUNCTION
+
+
+
+# [4] ----------------------- PARAMETERS   ----------------------------------------
+# do not change!
 dH = 0.05 # Thickness of artificial layer in case Z == layer interface
 f_low = 0.0
 f_high = 0.0
 npts0 = 4096
+# npts0 = 1024
 dt0 = 0.1
 ReductionVel = 100
 
 
+# [5] ----------------------- RUN   ----------------------------------------
 
 # Load velocity model
 MODEL = loadVmodel(MT_F,path2model)
@@ -72,15 +88,6 @@ for kk in range(np.size(DIST2,0)):
         for jj in range(len(GFlist)):
             [GRN0, nameG, depth, dist, pathFF] = Green2MSD(Path2_Green +'/'+ GFlist[jj])
             GRN0.write(mseed_dir + "%s.MSEED" % GFlist[jj], format="MSEED")
-            # GRN1 += GRN0
-#         GRN1.write(mseed_dir + "S%s.D%s.MSEED" % (kk, DEPTH[ii]), format="MSEED")
-# for ii in range(len(DEPTH)):
-#     GRD = read(mseed_dir + "S*.D%s.MSEED" % DEPTH[ii])
-#     GRD.write(mseed_dir + "SF.D%s.MSEED" % DEPTH[ii], format="MSEED")
-
-
-
-
 
 
 
