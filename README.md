@@ -63,6 +63,13 @@ Velocity model is used from GF/models/ .Use Gitt02.csv as a tamplate
 
 Or you can download the compressed Israel GF from my dropbox from https://www.dropbox.com/s/gp7pokem008cl56/GREEN_GitHDUF05__0.1_0.0-0.0_fullNNN_5.0_495.0.zip?dl=0
 
+# Customization
+
+Logo - please free to change to your preferred logo. The logo is placed in the /MT/Layers/Logo.png 
+
+Faults - Global faults are ploted from the compilation of Bird (2002) http://peterbird.name/publications/2003_pb2002/2003_pb2002.htm . The layer is 
+a shapefile in /MT/Layers/PB2002_boundaries.shp 
+
 Documantation is still in progress... More shold be added in the near future
 
 Please contact me directly if you have any questions: nadav.wetzler@gmail.com
