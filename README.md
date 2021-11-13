@@ -49,6 +49,12 @@ Two solutions are
 # Green's Functions
 You can make your own GF by running GF/Py/mk_Green_functions.py
 
+For MacOS use:
+Path2_bin = pathlib.Path('../BIN_HighSierra').resolve()
+
+For Linux use:
+Path2_bin = pathlib.Path('../BIN_Linux').resolve()
+
 Velocity model is used from GF/models/ .Use Gitt02.csv as a tamplate
 
 Or you can download the compressed Israel GF from my dropbox from https://www.dropbox.com/s/gp7pokem008cl56/GREEN_GitHDUF05__0.1_0.0-0.0_fullNNN_5.0_495.0.zip?dl=0
