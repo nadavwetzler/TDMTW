@@ -3,7 +3,7 @@ A full moment tensor solver
 
 Focal mechanisms is computed using the full-waveform time-domain moment tensor (TDMT) technique (Dreger and Helmberger 1993), which implemented at the Geological Survey of Israel. Data are extracted by a magnitude dependent time windows starting 80 s before the event origin time, corrected for instrument response and the horizontal components are rotated to great circle path. Green’s functions are computed using the frequency-wavenumber integration code (FKPROG) of Saikia (1994) based on the Israel velocity model of Gitterman et al. (2002) with a 10 Hz sampling rate. This velocity model can be updated and recalculated using your own velocity model. See below for more details.
 
-Green’s functions are band-pass filtered in the frequency band of 0.06–0.1 Hz for earthquake with magnitude 3.0≤MW≤4.0 (Fig. S4), and 0.5–1.0 Hz for MW≤2.9 in order to capture the high frequency seismic energy content of smaller magnitude earthquakes. This can be modified manually using -fmin and -fmax on the command line.
+Green’s functions are band-pass filtered in the frequency band of 0.06–0.1 Hz for earthquake with magnitude 3.0≤MW≤4.0, and 0.5–1.0 Hz for MW≤2.9 in order to capture the high frequency seismic energy content of smaller magnitude earthquakes. This can be modified manually using -fmin and -fmax on the command line.
 
 The best result is achieved through a grid-search on the depth and choosing the moment tensor solution and centroid depth for which the variance reduction (VR) is at maximum.  
 
@@ -28,17 +28,25 @@ Wetzler, N., Shalev, E., Göbel, T., Amelung, F., Kurzon, I., Lyakhovsky, V., Br
  
  python3.6 tdmtw.py -ot 2021-06-15T23:08:54 -lat 30.099 -lon 35.178 -d 21 -m 4.1 -c GFZ
  
- -ot: Origine time
+ -ot: Origine time (2021-06-15T23:08:54 - string)
  
- -lat: Latitude of the earthquake
+ -lat: Latitude of the earthquake (30.099 - float)
  
- -lon: Longitude of the earthquake
+ -lon: Longitude of the earthquake (35.178 - float)
  
- -d: Depth
+ -d: Depth (4 - intiger)
  
- -m: Magnitude
+ -m: Magnitude (4.7 - float)
  
- -c: the FDSN server
+ -c: the FDSN servers (GFZ,IRIS,... - you can use multiple providers by using commas)
+ 
+ Optional parameters:
+ 
+ -fmin: the low bp filter frequency
+ 
+ -fmax: the upper bp filter frequency
+ 
+
  
  For more information about this event:
  https://earthquake.co.il/en/earthquake/feltInfo.php?ID=202106152307
