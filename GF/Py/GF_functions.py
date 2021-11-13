@@ -42,6 +42,7 @@ def set_path_gf(name, path2folder,  dt0, f_low, f_high, DIST1, DIST2):
 def loadVmodel(name, path2model):
     model = pd.read_csv('%s/%s.csv' % (path2model,name))
     MODEL = np.array(model)
+    MODEL[0] = MODEL[0] + 0.01
     return MODEL
     
 # ----------build b2s.par file --------------------------
