@@ -1,7 +1,7 @@
 # TDMTW
 A full moment tensor solver
 
-Focal mechanisms is computed using the full-waveform time-domain moment tensor (TDMT) technique (Dreger and Helmberger 1993), which implemented at the Geological Survey of Israel (Wetzler et al., 2019). Data are extracted by a magnitude dependent time windows starting 80 s before the event origin time, corrected for instrument response and the horizontal components are rotated to great circle path. Green’s functions are computed using the frequency-wavenumber integration code (FKPROG) of Saikia (1994) based on the Israel velocity model of Gitterman et al. (2002) with a 10 Hz sampling rate. This velocity model can be updated and recalculated using your own velocity model. See below for more details.
+Focal mechanisms is computed using the full-waveform time-domain moment tensor (TDMT) technique (Dreger and Helmberger 1993), which implemented at the Geological Survey of Israel. Data are extracted by a magnitude dependent time windows starting 80 s before the event origin time, corrected for instrument response and the horizontal components are rotated to great circle path. Green’s functions are computed using the frequency-wavenumber integration code (FKPROG) of Saikia (1994) based on the Israel velocity model of Gitterman et al. (2002) with a 10 Hz sampling rate. This velocity model can be updated and recalculated using your own velocity model. See below for more details.
 
 Green’s functions are band-pass filtered in the frequency band of 0.06–0.1 Hz for earthquake with magnitude 3.0≤MW≤4.0 (Fig. S4), and 0.5–1.0 Hz for MW≤2.9 in order to capture the high frequency seismic energy content of smaller magnitude earthquakes. This can be modified manually using -fmin and -fmax on the command line.
 
@@ -17,6 +17,10 @@ Wetzler, N., Shalev, E., Göbel, T., Amelung, F., Kurzon, I., Lyakhovsky, V., Br
 
 # Please don't forget to cite if you use this code:
 Wetzler, N., Sagy, A., Marco, S., Reches, Z., 2021. Asymmetry of faults and stress patterns within the Dead Sea basin as displayed by seismological analysis. Tectonophysics 229069. https://doi.org/10.1016/j.tecto.2021.229069
+
+or
+
+Wetzler, N., Shalev, E., Göbel, T., Amelung, F., Kurzon, I., Lyakhovsky, V., Brodsky, E.E., 2019. Earthquake swarms triggered by groundwater extraction near the Dead Sea Fault. Geophys. Res. Lett. 46, 2019GL083491. https://doi.org/10.1029/2019GL083491
 
 # Run
  As a test case I chose one of the M4 along the main Dead Sea Transform - a left lateral strike-slip fault system.
