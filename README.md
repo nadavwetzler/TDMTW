@@ -59,7 +59,30 @@ Two solutions are
 ![Figure_2011](https://user-images.githubusercontent.com/88764899/129444688-54977b42-5c54-4845-a90a-ad0273cb503a.png)
 
 # Green's Functions
+1) sudo apt-get install csh
+
+you can try to use the pre-compiled file in BIN_Linux or BIN_HighSierra
+It is important to add the BIN_Linux or BIN_HighSierra folder to the .bashrc file
+edit the file:
+cd ~
+nano .bashrc
+export GFBIN='pathto/TDMTW-main/' 
+export PATH=${PATH}:${GFBIN}/GF/BIN_Linux
+
+Or make exe file to run green functions:
 You can make your own GF by running GF/Py/mk_Green_functions.py
+
+1) you need to install SAC from: http://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/102-0/
+2) cd GF/FK-Integration
+3) make clean
+4) make
+5) cd UTILITIES
+6) make clean
+7) make
+
+
+cd to /GF/Py
+pyhton3 mk_Green_function.py 
 
 For MacOS use:
 Path2_bin = pathlib.Path('../BIN_HighSierra').resolve()
