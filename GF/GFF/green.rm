@@ -1,0 +1,12 @@
+Making exe file to run green functions:
+1) cd GF
+2) mkdir BIN
+3) cd FK-Integration
+4) make clean
+5) make
+6) cd .. mv BIN BIN_Linux
+
+make sure files: wvint9, FKRPROG are created in BIN directory 
+
+cd to /GF/Py
+pyhton3 mk_Green_function.py 
