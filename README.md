@@ -92,7 +92,8 @@ Path2_bin = pathlib.Path('../BIN_Linux').resolve()
 
 Velocity model is used from GF/models/ .Use Gitt02.csv as a tamplate
 
-Or you can download the compressed Israel GF from my dropbox from https://www.dropbox.com/s/gp7pokem008cl56/GREEN_GitHDUF05__0.1_0.0-0.0_fullNNN_5.0_495.0.zip?dl=0
+Or you can download the compressed Israel GF from 
+https://figshare.com/articles/dataset/MSEED_GF_files/25567293
 
 # Customization
 
