@@ -48,7 +48,7 @@ from obspy.taup import TauPyModel
 from osm import OSM as OSM
 from matplotlib import pyplot as plt
 from obspy.imaging.beachball import beach, MomentTensor, mt2axes, mt2plane, aux_plane
-from obspy.signal.cross_correlation import xcorr
+from cross_correlation import xcorr
 from obspy.geodetics import FlinnEngdahl
 from fdsn_functions import *
 
