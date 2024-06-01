@@ -249,7 +249,10 @@ class OSM(object):
             else:
                 im = self.cashedtiles[tID]
             self.ax._set_artist_props(im)
-            self.ax.images.append(im)  # add image to axes
+            try:
+                self.ax.images.append(im)  # add image to axes
+            except:
+                self.ax.add_artist(im)
             self.currentimages.append(im)  # add image to current images list
         self.ax.stale = True
 
