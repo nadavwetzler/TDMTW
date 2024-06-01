@@ -2869,7 +2869,7 @@ def run_TDMTW(Origintime, AUTOMODE, STN_LIST0, Lat0, Long0, Depth0, Mw0, fdsn,dr
                 D1, D2 = SetDepthRang(Depth0,Min_Depth, Max_Depth,dr0)
 
                 print('Start inversion!')
-                Path2pdf = TDMTRUN(Depth0, Lat0, Long0, GFtype, Green, Final_STN_list, Final_Dist, Final_baz, Final_Lat_Stn, Final_Lon_Stn, SEIS_DISP_ROT_F, Sampl4inv, dt0, D1, D2, vol_p, ZCORS, faultsT, AUTOMODE, Event, SEIS0, fcutlow, fcuthigh,Taper2)
+                Path2pdf = TDMTRUN(Depth0, Lat0, Long0, GFtype, Green, Final_STN_list, Final_Dist, Final_baz, Final_Lat_Stn, Final_Lon_Stn, SEIS_DISP_ROT_F, Sampl4inv, smpl, D1, D2, vol_p, ZCORS, faultsT, AUTOMODE, Event, SEIS0, fcutlow, fcuthigh,Taper2)
                 return Path2pdf
     else:
         print('No stations are detected')
