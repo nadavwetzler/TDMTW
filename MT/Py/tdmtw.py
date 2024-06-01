@@ -2493,7 +2493,7 @@ def run_TDMTW(Origintime, AUTOMODE, STN_LIST0, Lat0, Long0, Depth0, Mw0, fdsn,dr
                     self.iconPath = LOGO
                     IMG = Image.open(self.iconPath)
                     logo_size = int(VLENGTH * Yplace[0] *1.0)
-                    IMG = IMG.resize((logo_size,logo_size), Image.ANTIALIAS)
+                    IMG = IMG.resize((logo_size, logo_size))
                     photoImg =  ImageTk.PhotoImage(IMG)
                     self.icon = photoImg
                     self.icon_size = Label(self.frame0)
